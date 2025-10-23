@@ -1,0 +1,31 @@
+# Test your FastAPI endpoints
+
+GET http://127.0.0.1:8000/
+Accept: application/json
+
+@baseUrl = http://127.0.0.1:8000/api
+
+### Get API info
+GET {{baseUrl}}/
+
+### Create a new child
+# @name create_child
+POST {{baseUrl}}/children/?name=John%20Doe&age=10&grade=5th
+
+### Get all children
+GET {{baseUrl}}/children/
+
+### Get child by ID
+@child_id = {{create_child.response.body.$.id}}
+GET {{baseUrl}}/children/{{child_id}}
+
+### Update child
+PUT {{baseUrl}}/children/{{child_id}}?name=John%20Smith&grade=6th
+
+### Delete child
+DELETE {{baseUrl}}/children/{{child_id}}
+
+### Try to get deleted child (should return 404)
+GET {{baseUrl}}/children/{{child_id}}
+
+###
