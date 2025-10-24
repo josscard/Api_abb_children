@@ -16,7 +16,7 @@ app = FastAPI(
 )
 
 # Include routes
-app.include_router(child_routes.router, prefix="/api", tags=["children"])
+app.include_router(child_routes.router, prefix="/api")
 
 
 @app.get("/")

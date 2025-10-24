@@ -36,3 +36,10 @@ class ChildUpdate(BaseModel):
     name: Optional[str] = None
     age: Optional[int] = None
     grade: Optional[str] = None
+
+
+class MultipleChildrenCreate(BaseModel):
+    """
+    Multiple children creation request model
+    """
+    children: list[ChildCreate]

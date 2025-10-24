@@ -43,6 +43,27 @@ class ChildController:
         self._root = self._insertNode(self._root, newChild)
         
         return newChild
+        
+    def createMultipleChildren(self, children_data: list[dict]) -> list[ChildModel]:
+        """
+        Create multiple children and insert them into BST
+        
+        Args:
+            children_data: List of dictionaries with child data (name, age, grade)
+            
+        Returns:
+            list[ChildModel]: List of created children
+        """
+        created_children = []
+        for child_data in children_data:
+            new_child = self.createChild(
+                name=child_data['name'],
+                age=child_data['age'],
+                grade=child_data['grade']
+            )
+            created_children.append(new_child)
+            
+        return created_children
     
     def _insertNode(self, node: Optional[TreeNode], child: ChildModel) -> TreeNode:
         """
@@ -171,37 +192,125 @@ class ChildController:
             
         if node.child.id == childId:
             return node
-            
         if childId < node.child.id:
             return self._findNode(node.left, childId)
         else:
             return self._findNode(node.right, childId)
     
-    def deleteChild(self, childId: int) -> bool:
+    def deleteChild(self, child_id: int) -> None:
         """
-        Delete child by ID
+        Delete a child by ID
         
         Args:
+            child_id: ID of the child to delete
+            
+        Raises:
+            ValueError: If child not found
+        """
+        self.root = self._delete_node(self.root, child_id)
+        
+    def get_age_distribution(self, range_step: int = 1) -> dict:
+        """
+        Get the distribution of children by age ranges.
+        Each child is counted in the first range that includes their age.
+        
+        Args:
+            range_step: Size of the age range (default: 1, e.g., 0-1, 1-2, etc.)
+            
+        Returns:
+            dict: Dictionary with total children and list of ranges with quantities
+            
+        Example return:
+            {
+                "total_children": 25,
+                "age_distribution": [
+                    {"range": "0-1", "quantity": 5},
+                    {"range": "1-2", "quantity": 8},
+                    ...
+                ]
+            }
+        """
+        children = []
+        self._inOrderTraversal(self._root, children)
+        
+        if not children:
+            return {
+                "total_children": 0,
+                "age_distribution": []
+            }
+        
+        # Sort children by age for consistent processing
+        children_sorted = sorted(children, key=lambda x: x.age)
+        max_age = max(child.age for child in children_sorted)
+        
+        # Initialize distribution and tracking
+        distribution = []
+        counted_children = set()
+        
+        # Create ranges from 0 to max_age + range_step to include the last range
+        current_start = 0
+        is_first_range = True
+        
+        while current_start <= max_age + range_step:
+            range_end = current_start + range_step
+            range_str = f"{current_start}-{range_end}"
+            quantity = 0
+            
+            # Count children in current range that haven't been counted yet
+            for child in children_sorted:
+                if child.id not in counted_children:
+                    # For first range: include start (>=), for others: exclude start (>)
+                    # All ranges: include values up to and including range_end (<=)
+                    if is_first_range:
+                        if current_start <= child.age <= range_end:
+                            quantity += 1
+                            counted_children.add(child.id)
+                    else:
+                        if current_start < child.age <= range_end:
+                            quantity += 1
+                            counted_children.add(child.id)
+            
+            distribution.append({
+                "range": range_str,
+                "quantity": quantity
+            })
+            
+            current_start = range_end
+            is_first_range = False
+        
+        # Verify total count matches
+        total_counted = sum(item["quantity"] for item in distribution)
+        total_actual = len(children_sorted)
+        
+        # If there's a discrepancy, adjust the last non-zero range
+        if total_counted != total_actual and distribution:
+            # Find the last non-zero quantity range
+            for i in range(len(distribution) - 1, -1, -1):
+                if distribution[i]["quantity"] > 0:
+                    distribution[i]["quantity"] += (total_actual - total_counted)
+                    break
+        
+        # Remove empty ranges at the end (except if it's the only one)
+        while len(distribution) > 1 and distribution[-1]["quantity"] == 0:
+            distribution.pop()
+        
+        return {
+            "total_children": total_actual,
+            "age_distribution": distribution
+        }
+        
+    def _deleteNode(self, node: Optional[TreeNode], childId: int) -> Optional[TreeNode]:
+        """
+{{ ... }}
+        
+        Args:
+            node: Root of the subtree
             childId: ID of child to delete
             
         Returns:
-            bool: True if deleted, False if not found
+            TreeNode: Root of the modified subtree
         """
-        self._root = self._deleteNode(self._root, childId)
-        return self._root is not None or self._root is not None
-    
-    def _deleteNode(self, node: Optional[TreeNode], childId: int) -> Optional[TreeNode]:
-        """
-        Delete node with given ID from BST
-        
-        Args:
-            node: Current node
-            childId: ID to delete
-            
-        Returns:
-            TreeNode: Updated node
-        """
-        # Base case: empty tree
+        # Base case
         if node is None:
             return node
             
